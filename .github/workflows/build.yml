@@ -22,7 +22,16 @@ jobs:
 
     - name: Compile EXE File
       run: |
-        bun build --compile ./index.js --outfile vlc11.exe
+        if (Test-Path "index.js") {
+          bun build --compile ./index.js --outfile vlc11.exe
+        } elseif (Test-Path "index.ts") {
+          bun build --compile ./index.ts --outfile vlc11.exe
+        } elseif (Test-Path "main.js") {
+          bun build --compile ./main.js --outfile vlc11.exe
+        } else {
+          echo "Main entry file not found. Creating a generic build..."
+          bun build --compile (Get-ChildItem -Filter *.js,*.ts | Select-Object -First 1).FullName --outfile vlc11.exe
+        }
 
     - name: Upload EXE Artifact
       uses: actions/upload-artifact@v4
