@@ -1,14 +1,17 @@
 {
-  "name": "react-example",
+  "name": "vlc-11-player",
+  "productName": "VLC 11 Player",
+  "version": "1.0.0",
   "private": true,
-  "version": "0.0.0",
   "type": "module",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "dist:win": "bun run build && electron-builder --win nsis"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -33,6 +36,22 @@
     "tailwindcss": "^4.3.3",
     "tsx": "^4.21.0",
     "typescript": "^7.0.2",
-    "vite-plugin-pwa": "^2.0.0"
+    "vite-plugin-pwa": "^2.0.0",
+    "electron": "^41.0.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.qaswar.vlc11player",
+    "productName": "VLC 11 Player",
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": ["nsis"]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }
