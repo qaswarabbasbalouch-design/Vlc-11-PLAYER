@@ -2,39 +2,34 @@ name: Build Windows EXE
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Setup Bun
-      uses: oven-sh/setup-bun@v2
-      with:
-        bun-version: latest
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
 
-    - name: Install dependencies
-      run: bun install
+      - name: Install dependencies
+        run: bun install
 
-    - name: Compile EXE File
-      run: |
-        if (Test-Path "index.js") {
-          bun build --compile ./index.js --outfile vlc11.exe
-        } elseif (Test-Path "index.ts") {
-          bun build --compile ./index.ts --outfile vlc11.exe
-        } elseif (Test-Path "main.js") {
-          bun build --compile ./main.js --outfile vlc11.exe
-        } else {
-          echo "Main entry file not found. Creating a generic build..."
-          bun build --compile (Get-ChildItem -Filter *.js,*.ts | Select-Object -First 1).FullName --outfile vlc11.exe
-        }
+      - name: Build Windows installer
+        run: bun run dist:win
 
-    - name: Upload EXE Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: Windows-Executable
-        path: vlc11.exe
+      - name: Upload EXE Installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: VLC-11-Player-Windows-Installer
+          path: release/*.exe
+          if-no-files-found: error
