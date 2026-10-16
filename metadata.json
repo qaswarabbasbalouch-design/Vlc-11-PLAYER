@@ -1,0 +1,6 @@
+{
+  "name": "Nova Media Player",
+  "description": "Standalone Windows 11 VLC-style multimedia player featuring hardware-accelerated decoding, equalizer, and complete C# WPF LibVLC desktop project and installer.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,193 @@
+<Window x:Class="NovaMediaPlayer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vlc="clr-namespace:LibVLCSharp.WPF;assembly=LibVLCSharp.WPF"
+        mc:Ignorable="d"
+        Title="Nova Media Player" Height="720" Width="1280"
+        MinHeight="480" MinWidth="720"
+        Background="#0B101B" Foreground="#F1F5F9"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None" AllowsTransparency="True"
+        KeyDown="Window_KeyDown"
+        MouseMove="Window_MouseMove"
+        MouseDoubleClick="Window_MouseDoubleClick">
+
+    <!-- Window Chrome and Fluent Border -->
+    <Border BorderBrush="#1E293B" BorderThickness="1" CornerRadius="8" Background="#0A0E17">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="36"/>  <!-- Custom Win11 Titlebar -->
+                <RowDefinition Height="28"/>  <!-- VLC Menu Bar -->
+                <RowDefinition Height="*"/>   <!-- Video Viewport -->
+                <RowDefinition Height="74"/>  <!-- Transport Controls Dock -->
+            </Grid.RowDefinitions>
+
+            <!-- 1. Custom Windows 11 Dark Titlebar -->
+            <Grid Grid.Row="0" Background="#080C14" MouseDown="TitleBar_MouseDown">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+                    <Border Width="20" Height="20" Background="#2563EB" CornerRadius="4" Margin="0,0,8,0">
+                        <Path Data="M 7,5 L 15,10 L 7,15 Z" Fill="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock Text="Nova Media Player" FontWeight="SemiBold" FontSize="12.5" Foreground="#E2E8F0"/>
+                    <TextBlock x:Name="TxtNowPlayingHeader" Text="" FontSize="11" Foreground="#94A3B8" Margin="8,1,0,0"/>
+                </StackPanel>
+
+                <!-- Windows Native Titlebar handles Minimize, Maximize, and Close automatically -->
+            </Grid>
+
+            <!-- 2. VLC Menu Bar -->
+            <Menu Grid.Row="1" Background="#0D131F" Foreground="#CBD5E1" FontSize="12" Padding="6,2,0,0">
+                <MenuItem Header="Media">
+                    <MenuItem Header="Open File..." InputGestureText="Ctrl+O" Click="MenuOpenFile_Click"/>
+                    <MenuItem Header="Open Folder..." InputGestureText="Ctrl+F" Click="MenuOpenFolder_Click"/>
+                    <MenuItem Header="Open Network Stream..." InputGestureText="Ctrl+N" Click="MenuOpenStream_Click"/>
+                    <Separator/>
+                    <MenuItem Header="Save Playlist to File..." Click="MenuSavePlaylist_Click"/>
+                    <MenuItem Header="Exit" InputGestureText="Ctrl+Q" Click="BtnClose_Click"/>
+                </MenuItem>
+                <MenuItem Header="Playback">
+                    <MenuItem Header="Play / Pause" InputGestureText="Space" Click="BtnPlayPause_Click"/>
+                    <MenuItem Header="Stop" InputGestureText="S" Click="BtnStop_Click"/>
+                    <MenuItem Header="Jump Forward 5s" InputGestureText="Right" Click="MenuSeekForward_Click"/>
+                    <MenuItem Header="Jump Backward 5s" InputGestureText="Left" Click="MenuSeekBackward_Click"/>
+                    <Separator/>
+                    <MenuItem Header="Speed" SubmenuOpened="MenuSpeed_Opened">
+                        <MenuItem Header="Faster (1.25x)" Click="MenuSetSpeed_Click" Tag="1.25"/>
+                        <MenuItem Header="Normal (1.0x)" Click="MenuSetSpeed_Click" Tag="1.0"/>
+                        <MenuItem Header="Slower (0.75x)" Click="MenuSetSpeed_Click" Tag="0.75"/>
+                    </MenuItem>
+                </MenuItem>
+                <MenuItem Header="Audio">
+                    <MenuItem Header="Audio Track" x:Name="MenuAudioTracks"/>
+                    <MenuItem Header="Equalizer..." InputGestureText="Ctrl+E" Click="BtnEqualizer_Click"/>
+                    <MenuItem Header="Mute" InputGestureText="M" Click="BtnMute_Click"/>
+                </MenuItem>
+                <MenuItem Header="Video">
+                    <MenuItem Header="Aspect Ratio" x:Name="MenuAspectRatio"/>
+                    <MenuItem Header="Take Snapshot" InputGestureText="Shift+S" Click="MenuSnapshot_Click"/>
+                    <MenuItem Header="Fullscreen" InputGestureText="F11" Click="BtnFullscreen_Click"/>
+                </MenuItem>
+                <MenuItem Header="Subtitles">
+                    <MenuItem Header="Add Subtitle File..." Click="MenuAddSub_Click"/>
+                    <MenuItem Header="Subtitle Track" x:Name="MenuSubtitleTracks"/>
+                </MenuItem>
+                <MenuItem Header="Tools">
+                    <MenuItem Header="Effects &amp; Filters" InputGestureText="Ctrl+E" Click="BtnEqualizer_Click"/>
+                    <MenuItem Header="Media Information" InputGestureText="Ctrl+I" Click="BtnMediaInfo_Click"/>
+                    <MenuItem Header="Preferences" InputGestureText="Ctrl+P" Click="BtnPreferences_Click"/>
+                </MenuItem>
+                <MenuItem Header="View">
+                    <MenuItem Header="Playlist" InputGestureText="Ctrl+L" Click="BtnPlaylist_Click"/>
+                    <MenuItem Header="Always on Top" IsCheckable="True" Click="MenuAlwaysOnTop_Click"/>
+                </MenuItem>
+            </Menu>
+
+            <!-- 3. Video Display Area -->
+            <Grid Grid.Row="2" Background="#000000" ClipToBounds="True">
+                <vlc:VideoView x:Name="MainVideoView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" MouseDown="VideoView_MouseDown"/>
+
+                <!-- Center Floating Play Indicator (matching the orange circle in screenshot) -->
+                <Border x:Name="CenterPlayOverlay" Width="72" Height="72" CornerRadius="36" Background="#EA580C"
+                        HorizontalAlignment="Center" VerticalAlignment="Center" Cursor="Hand"
+                        Opacity="0.9" MouseDown="CenterPlayOverlay_MouseDown">
+                    <Path Data="M 26,20 L 52,36 L 26,52 Z" Fill="White" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="4,0,0,0"/>
+                </Border>
+            </Grid>
+
+            <!-- 4. Playback Controls Bottom Dock (Pixel-matched to reference) -->
+            <Grid Grid.Row="3" Background="#0C111C" VerticalAlignment="Bottom">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="26"/>
+                    <RowDefinition Height="48"/>
+                </Grid.RowDefinitions>
+
+                <!-- Seek Bar Row -->
+                <Grid Grid.Row="0" Margin="14,4,14,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="65"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="65"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock x:Name="TxtCurrentTime" Text="00:02:34" Foreground="#94A3B8" FontSize="11" 
+                               FontFamily="Segoe UI, Segoe UI Variable" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                    
+                    <Slider Grid.Column="1" x:Name="SeekSlider" Minimum="0" Maximum="100" Value="20"
+                            Style="{StaticResource FluentSeekSliderStyle}"
+                            PreviewMouseDown="SeekSlider_PreviewMouseDown"
+                            PreviewMouseUp="SeekSlider_PreviewMouseUp"
+                            ValueChanged="SeekSlider_ValueChanged"
+                            VerticalAlignment="Center" Margin="8,0"/>
+
+                    <TextBlock x:Name="TxtDuration" Text="00:12:48" Foreground="#94A3B8" FontSize="11"
+                               FontFamily="Segoe UI, Segoe UI Variable" VerticalAlignment="Center" HorizontalAlignment="Right"
+                               Cursor="Hand"/>
+                </Grid>
+
+                <!-- Bottom Action Controls Row -->
+                <Grid Grid.Row="1" Margin="12,0,14,4">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                        <Button x:Name="BtnPrev" Style="{StaticResource TransportBtnStyle}" Click="BtnPrev_Click">
+                            <Path Data="M 6,5 L 6,15 M 16,5 L 8,10 L 16,15 Z" Stroke="#E2E8F0" StrokeThickness="1.5" Fill="#E2E8F0"/>
+                        </Button>
+
+                        <Button x:Name="BtnPlayPause" Style="{StaticResource PrimaryPlayBtnStyle}" Click="BtnPlayPause_Click" Margin="6,0">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Rectangle Width="4" Height="14" Fill="White" RadiusX="1" RadiusY="1" Margin="1,0"/>
+                                <Rectangle Width="4" Height="14" Fill="White" RadiusX="1" RadiusY="1" Margin="1,0"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button x:Name="BtnNext" Style="{StaticResource TransportBtnStyle}" Click="BtnNext_Click">
+                            <Path Data="M 16,5 L 16,15 M 6,5 L 14,10 L 6,15 Z" Stroke="#E2E8F0" StrokeThickness="1.5" Fill="#E2E8F0"/>
+                        </Button>
+
+                        <Button x:Name="BtnStop" Style="{StaticResource TransportBtnStyle}" Click="BtnStop_Click" Margin="8,0,4,0">
+                            <Rectangle Width="10" Height="10" Fill="#CBD5E1" RadiusX="1" RadiusY="1"/>
+                        </Button>
+
+                        <Button x:Name="BtnRepeat" Style="{StaticResource TransportBtnStyle}" Click="BtnRepeat_Click" ToolTip="Repeat Mode">
+                            <Path Data="M 4,7 L 14,7 A 3,3 0 0,1 17,10 L 17,11 M 17,13 L 7,13 A 3,3 0 0,1 4,10 L 4,9 M 12,5 L 14,7 L 12,9 M 9,11 L 7,13 L 9,15"
+                                  Stroke="#94A3B8" StrokeThickness="1.5"/>
+                        </Button>
+
+                        <Button x:Name="BtnShuffle" Style="{StaticResource TransportBtnStyle}" Click="BtnShuffle_Click" ToolTip="Shuffle Playlist">
+                            <Path Data="M 4,14 L 8,14 L 14,6 L 18,6 M 15,4 L 18,6 L 15,8 M 4,6 L 8,6 L 10,8.5 M 12,11.5 L 14,14 L 18,14 M 15,12 L 18,14 L 15,16"
+                                  Stroke="#94A3B8" StrokeThickness="1.5"/>
+                        </Button>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <Button x:Name="BtnMute" Style="{StaticResource TransportBtnStyle}" Click="BtnMute_Click">
+                            <Path Data="M 4,8 L 7,8 L 11,4 L 11,16 L 7,12 L 4,12 Z M 13,7 A 4,4 0 0,1 13,13" Stroke="#CBD5E1" StrokeThickness="1.5" Fill="#CBD5E1"/>
+                        </Button>
+
+                        <Slider x:Name="VolumeSlider" Minimum="0" Maximum="125" Value="100" Width="80"
+                                Style="{StaticResource FluentVolumeSliderStyle}"
+                                ValueChanged="VolumeSlider_ValueChanged"
+                                VerticalAlignment="Center" Margin="4,0,8,0"/>
+
+                        <TextBlock x:Name="TxtVolume" Text="100%" Foreground="#94A3B8" FontSize="11" Width="32" VerticalAlignment="Center"/>
+
+                        <Button x:Name="BtnAudioDrop" Content="Audio ▾" Style="{StaticResource DropdownPillBtnStyle}" Click="BtnAudioDrop_Click" Margin="4,0"/>
+                        <Button x:Name="BtnSubtitleDrop" Content="Subtitles ▾" Style="{StaticResource DropdownPillBtnStyle}" Click="BtnSubtitleDrop_Click" Margin="4,0"/>
+                        <Button x:Name="BtnSettings" Style="{StaticResource TransportBtnStyle}" Click="BtnSettings_Click" ToolTip="Video Effects &amp; Equalizer">
+                            <Path Data="M 12,15 A 3,3 0 1,0 12,9 A 3,3 0 0,0 12,15 Z" Fill="#CBD5E1"/>
+                        </Button>
+                        <Button x:Name="BtnFullscreen" Style="{StaticResource TransportBtnStyle}" Click="BtnFullscreen_Click" ToolTip="Fullscreen (F11)">
+                            <Path Data="M 4,8 L 4,4 L 8,4 M 16,4 L 20,4 L 20,8 M 20,16 L 20,20 L 16,20 M 8,20 L 4,20 L 4,16" Stroke="#CBD5E1" StrokeThickness="1.6"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>
